@@ -14,7 +14,7 @@
 #define I2C_PORT i2c1
 #define I2C_SDA 14
 #define I2C_SCL 15
-#define endereco 0x3C
+#define ADDRESS 0x3C
 
 #define WS2812_PIN          7
 #define LED_GREEN           11
@@ -153,7 +153,7 @@ int main() {
     gpio_pull_up(I2C_SCL);
 
     // Inicialização e configuração do display
-    ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT); 
+    ssd1306_init(&ssd, WIDTH, HEIGHT, false, ADDRESS, I2C_PORT); 
     ssd1306_config(&ssd);
     ssd1306_send_data(&ssd);
 
