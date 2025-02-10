@@ -35,15 +35,14 @@ ssd1306_t ssd; // Inicializa a estrutura do display
  * @param ssd Ponteiro para a estrutura do display.
  */
 void led_status_display(ssd1306_t *ssd) {
-    ssd1306_fill(ssd, false); // Limpa o display
+    // Limpa o display
+    ssd1306_fill(ssd, false);
 
-    // Verifica o estado do LED verde
-    bool estado_verde = gpio_get(LED_GREEN);
+    bool estado_verde = gpio_get(LED_GREEN); // Verifica o estado do LED verde
     char *msg_verde = estado_verde ? "Verde ON" : "Verde OFF";
     ssd1306_draw_string(ssd, msg_verde, 0, 0);
 
-    // Verifica o estado do LED azul
-    bool estado_azul = gpio_get(LED_BLUE);
+    bool estado_azul = gpio_get(LED_BLUE); // Verifica o estado do LED azul
     char *msg_azul = estado_azul ? "Azul ON" : "Azul OFF";
     ssd1306_draw_string(ssd, msg_azul, 0, 15);
 
@@ -52,12 +51,9 @@ void led_status_display(ssd1306_t *ssd) {
 
 
 /**
- * @brief Atualiza a matriz de LED e o display com base no caractere recebido via UART.
- *
- * Se o caractere for dígito (0-9), atualiza a LED matrix; caso contrário, limpa a matriz.
- * Também exibe o caractere recebido no display OLED.
+ * @brief Função responsável por atualizar a matriz de LEDs (WS2812) e o display com base na entrada via UART.
  */
-void display(char c_uart, PIO pio, uint sm){
+void show_char(char c_uart, PIO pio, uint sm){
     if ((c_uart >= '0') && (c_uart <= '9')) {
         uint8_t num = c_uart - '0';
         set_led_matrix(num, pio, sm);
@@ -68,16 +64,16 @@ void display(char c_uart, PIO pio, uint sm){
     // Atualiza e limpa o buffer do display
     ssd1306_fill(&ssd, false);
 
-    // Se houver caractere c_uart via UART, exibe na linha 3
+    // Se houver caractere c_uart via UART
     if (c_uart != '\0') {
         ssd1306_fill(&ssd, 0);
-        ssd1306_send_data(&ssd); // Atualiza o display com o novo conteúdo
+        ssd1306_send_data(&ssd); // Envia os dados para o display
 
         char str[2] = {c_uart, '\0'};
         ssd1306_draw_string(&ssd, "Caractere ", 0, 30); // Desenha uma string
         ssd1306_draw_string(&ssd, str, 80, 30); // Linha 3 (y=16)
         ssd1306_send_data(&ssd);
-        c_uart = '\0'; // Reseta após exibir
+        c_uart = '\0'; // Limpa
     }
 }
 
@@ -162,21 +158,21 @@ int main() {
     gpio_set_irq_enabled_with_callback(BTN_B, GPIO_IRQ_EDGE_FALL, true, &btn_interrupt);
 
     while (1) {
-        // Lê da interface USB CDC (a entrada padrão, se USB estiver conectada)
+        // Lê da USB CDC
         int c_usb = getchar_timeout_us(0);
         if (c_usb != PICO_ERROR_TIMEOUT) {
             sleep_ms(500);
-            display(c_usb, pio, sm);
+            show_char(c_usb, pio, sm);
             sleep_ms(500);
         }
 
         led_status_display(&ssd);
 
-        // Verifica se há dados disponíveis na UART
+        // Verifica tem dados na UART
         if (uart_is_readable(uart0)) {
             char c_uart = uart_getc(uart0);
             sleep_ms(500);
-            display(c_uart, pio, sm);
+            show_char(c_uart, pio, sm);
             sleep_ms(500);
         }
 
